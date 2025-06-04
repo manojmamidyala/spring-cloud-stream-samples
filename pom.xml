@@ -4,14 +4,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.example</groupId>
-	<artifactId>spring-cloud-stream-poc-parent</artifactId>
+	<artifactId>spring-cloud-stream-samples-parent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>spring-cloud-stream-poc-parent</name>
-	<description>Spring cloud stream POC</description>
+	<name>spring-cloud-stream-samples-parent</name>
+	<description>Spring cloud stream samples</description>
 
 	<modules>
 		<module>pulsar-producer-consumer</module>
+        <module>kafka-producer-consumer</module>
+		<module>multi-binder-kafka-pulsar</module>
 	</modules>
 
 	<properties>

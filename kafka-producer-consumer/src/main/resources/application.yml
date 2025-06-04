@@ -1,6 +1,4 @@
 spring:
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.pulsar.PulsarAutoConfiguration
   cloud:
     function:
       definition: uuidSupplier;digitRemovingConsumer;uuidConsumer
@@ -18,13 +16,12 @@ spring:
         uuidConsumer-in-0:
           destination: uuid-topic-dest
       binders:
-        pulsar1:
-          type: pulsar
+        kafka1:
+          type: kafka
           environment:
             spring:
-              main.sources: org.springframework.boot.autoconfigure.pulsar.PulsarAutoConfiguration
-              pulsar:
-                client:
-                  service-url: pulsar://localhost:6650
-                admin:
-                  service-url: http://localhost:8080
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: localhost:9092
