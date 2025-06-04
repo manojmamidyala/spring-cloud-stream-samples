@@ -1,0 +1,24 @@
+spring:
+  cloud:
+    function:
+      definition: uuidSupplier;digitRemovingConsumer;uuidConsumer
+    stream:
+      bindings:
+        uuidSupplier-out-0:
+          destination: uuid-topic-src
+          producer:
+            poller:
+              fixed-delay: 10000
+        digitRemovingConsumer-in-0:
+          destination: uuid-topic-src
+        digitRemovingConsumer-out-0:
+          destination: uuid-topic-dest
+        uuidConsumer-in-0:
+          destination: uuid-topic-dest
+
+
+  pulsar:
+    client:
+      service-url: pulsar://localhost:6650
+    admin:
+      service-url: http://localhost:8080
