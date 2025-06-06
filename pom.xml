@@ -15,6 +15,7 @@
         <module>kafka-producer-consumer</module>
 		<module>multi-binder-kafka-pulsar</module>
         <module>solace-produce-consume</module>
+        <module>mutli-binder-solace-pulsar</module>
     </modules>
 
 	<properties>

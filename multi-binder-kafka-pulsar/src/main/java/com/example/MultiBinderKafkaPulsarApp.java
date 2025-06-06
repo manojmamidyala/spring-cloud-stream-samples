@@ -10,10 +10,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SpringBootApplication
-public class MultiBinderApp {
+public class MultiBinderKafkaPulsarApp {
 
     public static void main( String[] args ) {
-        SpringApplication.run(MultiBinderApp.class, args);
+        SpringApplication.run(MultiBinderKafkaPulsarApp.class, args);
     }
 
     @Bean

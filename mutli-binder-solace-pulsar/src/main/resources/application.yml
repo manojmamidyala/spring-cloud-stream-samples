@@ -1,0 +1,42 @@
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.pulsar.PulsarAutoConfiguration
+  cloud:
+    function:
+      definition: uuidSupplier;digitRemovingConsumer;uuidConsumer
+    stream:
+      default-binder: pulsar1
+      bindings:
+        uuidSupplier-out-0:
+          destination: uuid-topic-src
+          binder: solace1
+          producer:
+            poller:
+              fixed-delay: 10000
+        digitRemovingConsumer-in-0:
+          destination: uuid-topic-src
+          binder: solace1
+        digitRemovingConsumer-out-0:
+          destination: uuid-topic-dest
+        uuidConsumer-in-0:
+          destination: uuid-topic-dest
+      binders:
+        pulsar1:
+          type: pulsar
+          environment:
+            spring:
+              main.sources: org.springframework.boot.autoconfigure.pulsar.PulsarAutoConfiguration
+              pulsar:
+                client:
+                  service-url: pulsar://localhost:6650
+                admin:
+                  service-url: http://localhost:8080
+        solace1:
+          type: solace
+          environment:
+            solace:
+              java:
+                host: tcp://localhost:55555
+                msgVpn: default
+                clientUsername: default
+                clientPassword: default
