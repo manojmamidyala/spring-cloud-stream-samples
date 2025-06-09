@@ -1,0 +1,45 @@
+spring:
+  cloud:
+    function:
+      definition: uuidSupplier;digitRemovingConsumer;uuidConsumer
+    stream:
+      bindings:
+        uuidSupplier-out-0:
+          destination: uuid/queue/src
+          producer:
+            poller:
+              fixed-delay: 10000
+        digitRemovingConsumer-in-0:
+          destination: uuid/queue/src
+          group: myconsumergroup1
+          consumer:
+            concurrency: 1
+        digitRemovingConsumer-out-0:
+          destination: uuid/queue/dest
+        uuidConsumer-in-0:
+          destination: uuid/queue/dest
+          group: myconsumergroup2
+          consumer:
+            concurrency: 1
+      binders:
+        local-solace:
+          type: solace
+          environment:
+            solace:
+              java:
+                host: tcp://localhost:55555
+                msgVpn: default
+                clientUsername: test-user
+                clientPassword: test-user
+
+      solace:
+        bindings:
+          digitRemovingConsumer-in-0:
+            consumer:
+              provision-durable-queue: false
+              queue-name-expression: "'uuid/queue/src'"
+          uuidConsumer-in-0:
+            consumer:
+              provision-durable-queue: false
+              queue-access-type: 1
+              queue-name-expression: "'uuid/queue/dest'"
