@@ -8,18 +8,26 @@ spring:
       default-binder: pulsar1
       bindings:
         uuidSupplier-out-0:
-          destination: uuid-topic-src
+          destination: uuid/queue/src
           binder: solace1
           producer:
             poller:
               fixed-delay: 10000
         digitRemovingConsumer-in-0:
-          destination: uuid-topic-src
+          destination: uuid/queue/src
           binder: solace1
+          consumer:
+            concurrency: 1
         digitRemovingConsumer-out-0:
           destination: uuid-topic-dest
         uuidConsumer-in-0:
           destination: uuid-topic-dest
+      solace:
+        bindings:
+          digitRemovingConsumer-in-0:
+            consumer:
+              provision-durable-queue: false
+              queue-name-expression: "'uuid/queue/src'"
       binders:
         pulsar1:
           type: pulsar

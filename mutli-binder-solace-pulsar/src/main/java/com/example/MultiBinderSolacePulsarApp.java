@@ -3,6 +3,7 @@ package com.example;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.messaging.converter.MessageConverter;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -14,6 +15,11 @@ public class MultiBinderSolacePulsarApp {
 
     public static void main( String[] args ) {
         SpringApplication.run(MultiBinderSolacePulsarApp.class, args);
+    }
+
+    @Bean
+    public MessageConverter customMessageConverter() {
+        return new PulsarMessageConverter();
     }
 
     @Bean
