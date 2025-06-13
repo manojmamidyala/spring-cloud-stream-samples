@@ -1,0 +1,118 @@
+1) Ack / N-Ack => using http codes 200 / non-200 | not using Pulsar’s native consumer acks in your app directly
+2) you do not have direct control over:
+    Batch acks
+    Individual negative acks
+    Dead-letter topics — unless you configure them at Pulsar level.
+3) Subscription Modes limitations
+| Pulsar Feature                               | Dapr                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `subscriptionType`                           | ✅ Supported via config                                                                |
+| Control per consumer instance                | ⚠️ Limited — all consumers in Dapr use the same type as defined in the component YAML |
+| Per-subscription settings                    | ⚠️ Not exposed — must configure at broker or topic level                              |
+| Consumer group scaling                       | ✅ Works (Shared mode spreads messages across instances)                               |
+| Fine control (Key\_Shared hash ranges, etc.) | ❌ Not exposed through Dapr API                                                        |
+
+
+4) Multi topic subscription
+    - Dapr’s Pulsar pub/sub component does not natively support Pulsar’s wildcard topics (my-topic-*)
+    - Instead, it uses a simple topic-to-handler mapping:
+        - Each topic must have its own subscription route
+        - You declare each topic explicitly in your app or components.yaml
+    - You must list each topic explicitly
+| Feature                         | Supported in Dapr Pulsar?                |
+| ------------------------------- | ---------------------------------------- |
+| Native multi-topic consumer     | ❌                                        |
+| Wildcard subscriptions          | ❌                                        |
+| One handler for multiple topics | ✅ (you can reuse same route if you want) |
+| One consumer internally         | ❌ (one per topic)                        |
+
+
+6) ack timeout + broker retry = works, but you configure these on the Pulsar topic or subscription, NOT in Dapr config.
+
+| Feature                | Supported in Dapr Pulsar component?                 |
+| ---------------------- | --------------------------------------------------- |
+| **ack timeout**        | ❌ No direct setting in component YAML               |
+| **max redeliveries**   | ❌ Not exposed                                       |
+| **dead-letter topic**  | ✅ Partially: you can set `deadLetterTopic` metadata |
+| **redelivery backoff** | ❌ Not exposed                                       |
+
+What Dapr itself exposes
+| Feature                | Supported in Dapr Pulsar component?                 |
+| ---------------------- | --------------------------------------------------- |
+| **ack timeout**        | ❌ No direct setting in component YAML               |
+| **max redeliveries**   | ❌ Not exposed                                       |
+| **dead-letter topic**  | ✅ Partially: you can set `deadLetterTopic` metadata |
+| **redelivery backoff** | ❌ Not exposed                                       |
+
+
+7) Dapr SDKs supported languages
+    - Python
+    - JavaScript
+    - .NET
+    - Java
+    - Go
+    
+Why use Dapr gRPC at all?
+✔ Simpler: same API for Kafka, Pulsar, Solace, Redis Streams, etc.
+✔ Language-agnostic: just use Dapr’s gRPC or HTTP client.
+✔ Good for microservices where portability > performance.
+
+When to use native Pulsar protocol
+✔ Need:
+100k+ messages/sec throughput
+Precise control of subscription modes, acks, batching
+Low-level features: transaction, schema registry, complex topic patterns
+
+
+
+➡️ Then use Pulsar’s native client, not Dapr.
+
+| Feature           | **Dapr**                                            | **Spring Cloud Stream**                                  |
+| ----------------- | --------------------------------------------------- | -------------------------------------------------------- |
+| Type              | Runtime + API abstraction layer                     | Java library + abstraction over messaging middleware     |
+| Language Support  | Polyglot (any language)                             | Java only                                                |
+| Transport Support | Pluggable (Kafka, Redis, NATS, etc.) via components | Kafka, RabbitMQ (mainly)                                 |
+| Messaging Pattern | Pub/Sub abstraction, state, bindings, actors, etc.  | Focused on messaging abstraction (input/output bindings) |
+| Deployment        | Sidecar architecture                                | Embedded in the Spring Boot app                          |
+| Use Case          | Cloud-native distributed system infrastructure      | Event-driven messaging with Spring Boot                  |
+| Vendor Lock-in    | Less (vendor-agnostic components)                   | More (tightly coupled with Spring ecosystem)             |
+
+
+
+| Use Case                                        | Choose Dapr   | Choose Spring Cloud Stream                   |
+| ----------------------------------------------- | ------------- | -------------------------------------------- |
+| Polyglot microservices (e.g., Go, Python, Java) | ✅            | ❌                                            |
+| Java/Spring Boot applications only              | 🚫            | ✅                                            |
+| Need abstraction over service invocation, state | ✅            | 🚫                                           |
+| Deep Spring ecosystem integration needed        | ❌            | ✅                                            |
+| You want Kubernetes-native sidecar pattern      | ✅            | ❌                                            |
+| You prefer function-based reactive style        | Some support  | Strong support (e.g., Spring Cloud Function) |
+
+
+| Aspect              | **Dapr**                                                                               | **Spring Cloud Stream**                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Message latency** | Slightly higher due to sidecar hop: App → Dapr sidecar → Broker (Kafka/Pulsar/Solace). | Direct in-process communication: App → Broker (via client lib). Lower latency for simple cases. |
+| **Throughput**      | Good for moderate workloads; scales well with Kubernetes autoscaling.                  | Often higher throughput for pure Java workloads due to no extra hop.                            |
+| **Overhead**        | Sidecar adds serialization/deserialization & network hop.                              | No sidecar. Uses native broker client libraries directly in the JVM.                            |
+| **Resource usage**  | Needs extra container per pod (sidecar).                                               | No extra containers.                                                                            |
+
+Summary:
+If you want lowest possible latency & max throughput for Java, Spring Cloud Stream often wins.
+If you want portability, polyglot support & operational consistency, Dapr’s overhead is usually acceptable for most workloads.
+
+
+| Broker            | **Dapr**                                                     | **Spring Cloud Stream**                                                        |
+| ----------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| **Apache Kafka**  | ✅ Native pub/sub component. Well-supported.                  | ✅ 1st-class, fully integrated. Most common backend.                            |
+| **Apache Pulsar** | ✅ Official pub/sub component available. Community supported. | ⚠️ No official binder. Some 3rd party projects exist, but not mature.          |
+| **Solace**        | ✅ Official pub/sub component exists. Supported by Solace.    | ✅ Official binder from Solace (Solace PubSub+ Binder for Spring Cloud Stream). |
+
+
+ Key Takeaways
+| If you care about                         | Pick                                                    |
+| ----------------------------------------- | ------------------------------------------------------- |
+| **Maximum performance for Kafka in Java** | ✅ **Spring Cloud Stream**                               |
+| **Running Pulsar in Java easily**         | ✅ **Dapr** (no official binder for Spring Cloud Stream) |
+| **Solace**                                | ✅ **Both are good; pick based on your app stack**       |
+| **Multi-language support**                | ✅ **Dapr**                                              |
+| **In-process direct client (no sidecar)** | ✅ **Spring Cloud Stream**                               |
